@@ -3,21 +3,21 @@ rule-providers:
     type: http
     behavior: domain
     format: yaml
-    url: https://<user>.github.io/<repo>/mihomo/ai.yaml
+    url: https://imNebula.github.io/Rules/mihomo/ai.yaml
     path: ./ruleset/ai.yaml
     interval: 86400
   direct:
     type: http
     behavior: domain
     format: yaml
-    url: https://<user>.github.io/<repo>/mihomo/direct.yaml
+    url: https://imNebula.github.io/Rules/mihomo/direct.yaml
     path: ./ruleset/direct.yaml
     interval: 86400
   reject:
     type: http
     behavior: domain
     format: yaml
-    url: https://<user>.github.io/<repo>/mihomo/reject.yaml
+    url: https://imNebula.github.io/Rules/mihomo/reject.yaml
     path: ./ruleset/reject.yaml
     interval: 86400
 

@@ -1,0 +1,27 @@
+# One source file for all generated rule sets.
+#
+# Group names become output filenames:
+#   [ai] -> dist/mihomo/ai.yaml, dist/surge/domain-set/ai.txt, ...
+#
+# Syntax:
+#   example.com        matches example.com and subdomains
+#   *.example.com      same as example.com
+#   .example.com       same as example.com
+#   =api.example.com   matches only api.example.com
+#   @https://...       import external list/yaml automatically
+#   @list <path|url>   import as text/list
+#   @yaml <path|url>   import as Mihomo-style payload YAML
+
+[ai]
+openai.com
+chatgpt.com
+anthropic.com
+perplexity.ai
+
+[direct]
+=example.com
+apple.com
+
+[reject]
+ads.example.com
+tracking.example.net

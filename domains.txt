@@ -12,16 +12,16 @@
 #   @list <path|url>   import as text/list
 #   @yaml <path|url>   import as Mihomo-style payload YAML
 
-[ai]
-openai.com
-chatgpt.com
-anthropic.com
-perplexity.ai
+[uzu]
+ping0.com
+ippure.com
+ip.skk.moe
+ip.net.coffee
+iplark.com
+ip.check.place
 
-[direct]
-=example.com
-apple.com
+[fast]
 
-[reject]
-ads.example.com
-tracking.example.net
+ko.nodown.sbs
+nodeseek.com
+

@@ -1,28 +1,20 @@
 rule-providers:
-  ai:
+  uzu:
     type: http
     behavior: domain
     format: yaml
-    url: https://imNebula.github.io/Rules/mihomo/ai.yaml
-    path: ./ruleset/ai.yaml
+    url: https://imNebula.github.io/Rules/mihomo/uzu.yaml
+    path: ./ruleset/uzu.yaml
     interval: 86400
-  direct:
+  fast:
     type: http
     behavior: domain
     format: yaml
-    url: https://imNebula.github.io/Rules/mihomo/direct.yaml
-    path: ./ruleset/direct.yaml
-    interval: 86400
-  reject:
-    type: http
-    behavior: domain
-    format: yaml
-    url: https://imNebula.github.io/Rules/mihomo/reject.yaml
-    path: ./ruleset/reject.yaml
+    url: https://imNebula.github.io/Rules/mihomo/fast.yaml
+    path: ./ruleset/fast.yaml
     interval: 86400
 
 rules:
-  - RULE-SET,ai,AI
-  - RULE-SET,direct,DIRECT
-  - RULE-SET,reject,REJECT
+  - RULE-SET,uzu,UZU
+  - RULE-SET,fast,FAST
   - MATCH,PROXY

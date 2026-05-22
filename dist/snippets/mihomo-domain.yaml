@@ -1,0 +1,28 @@
+rule-providers:
+  ai:
+    type: http
+    behavior: domain
+    format: yaml
+    url: 'https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/domain/ai.yaml'
+    path: ./ruleset/ai-domain.yaml
+    interval: 86400
+  direct:
+    type: http
+    behavior: domain
+    format: yaml
+    url: 'https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/domain/direct.yaml'
+    path: ./ruleset/direct-domain.yaml
+    interval: 86400
+  reject:
+    type: http
+    behavior: domain
+    format: yaml
+    url: 'https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/domain/reject.yaml'
+    path: ./ruleset/reject-domain.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,ai,AI
+  - RULE-SET,direct,DIRECT
+  - RULE-SET,reject,REJECT
+  - MATCH,PROXY

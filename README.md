@@ -2,7 +2,7 @@
 
 这是一个面向 Surge 和 Mihomo 的轻量规则生成仓库。
 
-你只需要维护根目录的 `domains.txt`，GitHub Actions 会自动生成 `dist/` 下的规则文件，并把这些产物回写到仓库。这样你既可以用 GitHub Pages 地址，也可以直接用仓库直链。
+你只需要维护根目录的 `domains.txt`，GitHub Actions 会自动生成 `dist/` 下的规则文件，并把这些产物回写到仓库。生成器按客户端官方格式分别输出 Mihomo `classical` rule-provider、Mihomo `domain` rule-provider、Surge `DOMAIN-SET` 和 Surge `RULE-SET`。
 
 ## 规则写法
 
@@ -37,6 +37,7 @@ apple.com
 - Mihomo 域名写法：`+.example.com`
 - Surge DOMAIN-SET 写法：`.example.com`
 - 经典规则：`DOMAIN,api.example.com`、`DOMAIN-SUFFIX,example.com`
+- 关键词规则：`DOMAIN-KEYWORD,openai`
 - Mihomo provider YAML：`payload:` 下的 `- '+.example.com'`
 
 导入语义说明：
@@ -44,6 +45,9 @@ apple.com
 - 根 `domains.txt` 里直接写的 `example.com` 仍然表示“根域名 + 子域名”。
 - 外部 `list/yaml` 里如果是裸域名 `example.com`，会按规则提供者常见语义当作精确域名处理。
 - 如果你希望导入源明确表示后缀匹配，建议使用 `+.example.com`、`.example.com` 或 `DOMAIN-SUFFIX,example.com`。
+- Mihomo 默认输出使用官方 `classical` provider：`DOMAIN-SUFFIX,example.com` / `DOMAIN,example.com`。
+- 额外输出的 Mihomo `domain` provider 使用 Clash wildcard：`+.example.com` / `example.com`。
+- Surge `DOMAIN-SET` 只输出域名和后缀项；`DOMAIN-KEYWORD` 等非 DOMAIN/DOMAIN-SUFFIX 规则只进入 Surge `RULE-SET` 和 Mihomo `classical` provider。
 
 ## 重复检测
 
@@ -67,9 +71,12 @@ python3 scripts/build.py
 
 - `dist/mihomo/<group>.yaml`
 - `dist/mihomo/<group>.list`
+- `dist/mihomo/domain/<group>.yaml`
+- `dist/mihomo/domain/<group>.list`
 - `dist/surge/domain-set/<group>.txt`
 - `dist/surge/rule-set/<group>.list`
 - `dist/snippets/mihomo.yaml`
+- `dist/snippets/mihomo-domain.yaml`
 - `dist/snippets/surge.conf`
 - `dist/snippets/surge-rule-set.conf`
 
@@ -116,6 +123,8 @@ https://imnebula.github.io/Rules/surge/domain-set/ai.txt
 https://imnebula.github.io/Rules/surge/rule-set/ai.list
 ```
 
+生成的 snippets 默认使用 Raw GitHub 地址。若要让 snippets 使用 Pages 地址，可在构建环境设置 `RULES_BASE_URL=https://imnebula.github.io/Rules`。
+
 ## 客户端引用示例
 
 Mihomo：
@@ -124,7 +133,7 @@ Mihomo：
 rule-providers:
   ai:
     type: http
-    behavior: domain
+    behavior: classical
     format: yaml
     url: https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/ai.yaml
     path: ./ruleset/ai.yaml
@@ -135,6 +144,8 @@ rules:
   - MATCH,PROXY
 ```
 
+如果你明确要使用 Mihomo `domain` provider，可以引用 `dist/snippets/mihomo-domain.yaml` 或 `dist/mihomo/domain/<group>.yaml`。
+
 Surge：
 
 ```ini
@@ -142,3 +153,5 @@ Surge：
 DOMAIN-SET,https://raw.githubusercontent.com/imNebula/Rules/main/dist/surge/domain-set/ai.txt,AI,extended-matching
 FINAL,PROXY
 ```
+
+如果规则里包含 `DOMAIN-KEYWORD` 等非纯域名规则，应使用 `dist/snippets/surge-rule-set.conf`。

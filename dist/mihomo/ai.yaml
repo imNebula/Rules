@@ -1,5 +1,5 @@
 payload:
-  - '+.anthropic.com'
-  - '+.chatgpt.com'
-  - '+.openai.com'
-  - '+.perplexity.ai'
+  - 'DOMAIN-SUFFIX,anthropic.com'
+  - 'DOMAIN-SUFFIX,chatgpt.com'
+  - 'DOMAIN-SUFFIX,openai.com'
+  - 'DOMAIN-SUFFIX,perplexity.ai'

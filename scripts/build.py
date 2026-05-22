@@ -4,6 +4,7 @@ from urllib.request import Request, urlopen
 import os
 import re
 import shutil
+import subprocess
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -17,6 +18,10 @@ DOMAIN_RE = re.compile(
 )
 GROUP_RE = re.compile(r"^[a-z0-9_-]+$")
 IMPORT_RE = re.compile(r"^@(?:(auto|list|yaml)\s+)?(.+)$", re.IGNORECASE)
+KEYWORD_RE = re.compile(r"^[^,\s#]+$")
+GITHUB_RE = re.compile(
+    r"^(?:https?://[^/\s]+/|git@[^:\s]+:)([^/\s]+)/([^/\s]+?)(?:\.git)?/?$"
+)
 
 
 def strip_inline_comment(value: str) -> str:
@@ -67,6 +72,11 @@ def normalize_rule_token(raw: str, plain_mode: str = "suffix"):
         return normalize_domain(s.split(",", 1)[1].strip())
     if upper.startswith("DOMAIN,"):
         return normalize_domain("=" + s.split(",", 1)[1].strip())
+    if upper.startswith("DOMAIN-KEYWORD,"):
+        keyword = s.split(",", 1)[1].strip().lower()
+        if not KEYWORD_RE.match(keyword):
+            raise ValueError(f"Invalid DOMAIN-KEYWORD rule: {raw}")
+        return ("keyword", keyword)
     if upper.startswith("HOST-SUFFIX,"):
         return normalize_domain(s.split(",", 1)[1].strip())
     if upper.startswith("HOST,"):
@@ -207,30 +217,73 @@ def parse_domains():
 
 
 def base_url():
-    configured = os.environ.get("PAGES_BASE_URL", "").strip().rstrip("/")
+    configured = (
+        os.environ.get("RULES_BASE_URL", "").strip()
+        or os.environ.get("PAGES_BASE_URL", "").strip()
+    ).rstrip("/")
     if configured:
         return configured
 
     repo = os.environ.get("GITHUB_REPOSITORY", "").strip()
-    if "/" in repo:
-        owner, name = repo.split("/", 1)
-        if name.lower() == f"{owner.lower()}.github.io":
-            return f"https://{owner.lower()}.github.io"
-        return f"https://{owner}.github.io/{name}"
+    branch = os.environ.get("GITHUB_REF_NAME", "").strip() or git_output(
+        "branch", "--show-current"
+    )
+    if "/" not in repo:
+        repo = github_repo_from_origin()
+
+    if "/" in repo and branch:
+        return f"https://raw.githubusercontent.com/{repo}/{branch}/dist"
 
     return "https://<user>.github.io/<repo>"
 
 
-def mihomo_value(kind, domain):
+def git_output(*args):
+    try:
+        return subprocess.check_output(
+            ["git", *args],
+            cwd=ROOT,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            timeout=5,
+        ).strip()
+    except (subprocess.SubprocessError, OSError):
+        return ""
+
+
+def github_repo_from_origin():
+    origin = git_output("config", "--get", "remote.origin.url")
+    match = GITHUB_RE.search(origin)
+    if not match:
+        return ""
+    return f"{match.group(1)}/{match.group(2)}"
+
+
+def yaml_quote(value):
+    return "'" + value.replace("'", "''") + "'"
+
+
+def mihomo_domain_value(kind, domain):
     return domain if kind == "exact" else f"+.{domain}"
 
 
+def classical_rule_value(kind, domain):
+    if kind == "exact":
+        return f"DOMAIN,{domain}"
+    if kind == "suffix":
+        return f"DOMAIN-SUFFIX,{domain}"
+    if kind == "keyword":
+        return f"DOMAIN-KEYWORD,{domain}"
+    raise ValueError(f"Unsupported rule kind: {kind}")
+
+
 def surge_domain_set_value(kind, domain):
+    if kind == "keyword":
+        return None
     return domain if kind == "exact" else f".{domain}"
 
 
 def surge_rule_set_value(kind, domain):
-    return f"DOMAIN,{domain}" if kind == "exact" else f"DOMAIN-SUFFIX,{domain}"
+    return classical_rule_value(kind, domain)
 
 
 def write_files(groups):
@@ -238,27 +291,45 @@ def write_files(groups):
         shutil.rmtree(OUT)
 
     (OUT / "mihomo").mkdir(parents=True)
+    (OUT / "mihomo" / "domain").mkdir(parents=True)
     (OUT / "surge" / "domain-set").mkdir(parents=True)
     (OUT / "surge" / "rule-set").mkdir(parents=True)
     (OUT / "snippets").mkdir(parents=True)
 
     root_url = base_url()
     mihomo_snippet = ["rule-providers:"]
+    mihomo_domain_snippet = ["rule-providers:"]
     mihomo_rules = ["rules:"]
+    mihomo_domain_rules = ["rules:"]
     surge_domain_set_lines = ["[Rule]"]
     surge_rule_set_lines = ["[Rule]"]
 
     for group, items in groups.items():
-        mihomo_payload = [mihomo_value(k, d) for k, d in items]
-        surge_domain_set = [surge_domain_set_value(k, d) for k, d in items]
+        mihomo_payload = [classical_rule_value(k, d) for k, d in items]
+        mihomo_domain_payload = [
+            mihomo_domain_value(k, d) for k, d in items if k in {"exact", "suffix"}
+        ]
+        surge_domain_set = [
+            x for x in (surge_domain_set_value(k, d) for k, d in items) if x
+        ]
         surge_rule_set = [surge_rule_set_value(k, d) for k, d in items]
 
         (OUT / "mihomo" / f"{group}.yaml").write_text(
-            "payload:\n" + "\n".join(f"  - '{x}'" for x in mihomo_payload) + "\n",
+            "payload:\n" + "\n".join(f"  - {yaml_quote(x)}" for x in mihomo_payload) + "\n",
             encoding="utf-8",
         )
         (OUT / "mihomo" / f"{group}.list").write_text(
             "\n".join(mihomo_payload) + "\n",
+            encoding="utf-8",
+        )
+        (OUT / "mihomo" / "domain" / f"{group}.yaml").write_text(
+            "payload:\n"
+            + "\n".join(f"  - {yaml_quote(x)}" for x in mihomo_domain_payload)
+            + "\n",
+            encoding="utf-8",
+        )
+        (OUT / "mihomo" / "domain" / f"{group}.list").write_text(
+            "\n".join(mihomo_domain_payload) + "\n",
             encoding="utf-8",
         )
         (OUT / "surge" / "domain-set" / f"{group}.txt").write_text(
@@ -275,26 +346,41 @@ def write_files(groups):
         mihomo_snippet += [
             f"  {group}:",
             "    type: http",
-            "    behavior: domain",
+            "    behavior: classical",
             "    format: yaml",
-            f"    url: {root_url}/mihomo/{group}.yaml",
+            f"    url: {yaml_quote(f'{root_url}/mihomo/{group}.yaml')}",
             f"    path: ./ruleset/{group}.yaml",
             "    interval: 86400",
         ]
         mihomo_rules.append(f"  - RULE-SET,{group},{policy}")
+        mihomo_domain_snippet += [
+            f"  {group}:",
+            "    type: http",
+            "    behavior: domain",
+            "    format: yaml",
+            f"    url: {yaml_quote(f'{root_url}/mihomo/domain/{group}.yaml')}",
+            f"    path: ./ruleset/{group}-domain.yaml",
+            "    interval: 86400",
+        ]
+        mihomo_domain_rules.append(f"  - RULE-SET,{group},{policy}")
         surge_domain_set_lines.append(
             f"DOMAIN-SET,{root_url}/surge/domain-set/{group}.txt,{policy},extended-matching"
         )
         surge_rule_set_lines.append(
-            f"RULE-SET,{root_url}/surge/rule-set/{group}.list,{policy},extended-matching"
+            f"RULE-SET,{root_url}/surge/rule-set/{group}.list,{policy}"
         )
 
     mihomo_rules.append("  - MATCH,PROXY")
+    mihomo_domain_rules.append("  - MATCH,PROXY")
     surge_domain_set_lines.append("FINAL,PROXY")
     surge_rule_set_lines.append("FINAL,PROXY")
 
     (OUT / "snippets" / "mihomo.yaml").write_text(
         "\n".join(mihomo_snippet) + "\n\n" + "\n".join(mihomo_rules) + "\n",
+        encoding="utf-8",
+    )
+    (OUT / "snippets" / "mihomo-domain.yaml").write_text(
+        "\n".join(mihomo_domain_snippet) + "\n\n" + "\n".join(mihomo_domain_rules) + "\n",
         encoding="utf-8",
     )
     (OUT / "snippets" / "surge.conf").write_text(

@@ -15,7 +15,7 @@
 [uzu]
 ping0.com
 ippure.com
-ip.skk.moe
+skk.moe
 iplark.com
 ip.check.place
 

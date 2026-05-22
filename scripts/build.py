@@ -148,32 +148,8 @@ def parse_import(target: str, declared_format: str):
     return parse_import_lines(text, fmt, target)
 
 
-def ensure_unique(entries):
-    seen = {}
-    duplicates = {}
-
-    for entry in entries:
-        key = entry["item"]
-        if key in seen:
-            duplicates.setdefault(key, [seen[key]]).append(entry)
-        else:
-            seen[key] = entry
-
-    if not duplicates:
-        return
-
-    lines = ["Duplicate rules found:"]
-    for (kind, domain), matches in sorted(duplicates.items(), key=lambda x: (x[0][1], x[0][0])):
-        rendered = f"{kind}:{domain}"
-        lines.append(f"- {rendered}")
-        for match in matches:
-            lines.append(f"  group={match['group']} source={match['source']}")
-    raise ValueError("\n".join(lines))
-
-
 def parse_domains():
     groups = {}
-    entries = []
     current = "custom"
 
     for line_no, raw_line in enumerate(SRC.read_text(encoding="utf-8").splitlines(), 1):
@@ -196,21 +172,18 @@ def parse_domains():
                 raise ValueError(f"Missing import target at line {line_no}")
 
             for item, source in parse_import(import_target, import_format):
-                entry = {"group": current, "item": item, "source": source}
                 groups.setdefault(current, []).append(item)
-                entries.append(entry)
             continue
 
         item = normalize_domain(line)
         if item:
             groups.setdefault(current, []).append(item)
-            entries.append({"group": current, "item": item, "source": f"{SRC.name}:{line_no}"})
-
-    ensure_unique(entries)
 
     result = {}
     for group, items in groups.items():
-        normalized = sorted(items, key=lambda x: (x[1], x[0]))
+        # Silently deduplicate items within each group, preserving order of first occurrence
+        unique_items = list(dict.fromkeys(items))
+        normalized = sorted(unique_items, key=lambda x: (x[1], x[0]))
         if normalized:
             result[group] = normalized
     return result

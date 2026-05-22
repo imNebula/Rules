@@ -19,6 +19,11 @@ skk.moe
 iplark.com
 check.place
 
+[sb]
+ping0.cc
+ippure.com
+iplark.com
+
 [fast]
 ko.nodown.sbs
 nodeseek.com

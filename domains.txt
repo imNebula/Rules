@@ -13,14 +13,13 @@
 #   @yaml <path|url>   import as Mihomo-style payload YAML
 
 [uzu]
-ping0.com
+ping0.cc
 ippure.com
 skk.moe
 iplark.com
-ip.check.place
+check.place
 
 [fast]
-
 ko.nodown.sbs
 nodeseek.com
 

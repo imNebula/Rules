@@ -86,23 +86,24 @@ python3 scripts/build.py
 
 - GitHub 仓库：`imNebula/Rules`
 - 默认分支：`main`
+- 发布分支（构建产物）：`release`
 
 Raw GitHub：
 
 ```txt
-https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/ai.yaml
-https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/ai.list
-https://raw.githubusercontent.com/imNebula/Rules/main/dist/surge/domain-set/ai.txt
-https://raw.githubusercontent.com/imNebula/Rules/main/dist/surge/rule-set/ai.list
+https://raw.githubusercontent.com/imNebula/Rules/release/dist/mihomo/ai.yaml
+https://raw.githubusercontent.com/imNebula/Rules/release/dist/mihomo/ai.list
+https://raw.githubusercontent.com/imNebula/Rules/release/dist/surge/domain-set/ai.txt
+https://raw.githubusercontent.com/imNebula/Rules/release/dist/surge/rule-set/ai.list
 ```
 
 jsDelivr：
 
 ```txt
-https://cdn.jsdelivr.net/gh/imNebula/Rules@main/dist/mihomo/ai.yaml
-https://cdn.jsdelivr.net/gh/imNebula/Rules@main/dist/mihomo/ai.list
-https://cdn.jsdelivr.net/gh/imNebula/Rules@main/dist/surge/domain-set/ai.txt
-https://cdn.jsdelivr.net/gh/imNebula/Rules@main/dist/surge/rule-set/ai.list
+https://cdn.jsdelivr.net/gh/imNebula/Rules@release/dist/mihomo/ai.yaml
+https://cdn.jsdelivr.net/gh/imNebula/Rules@release/dist/mihomo/ai.list
+https://cdn.jsdelivr.net/gh/imNebula/Rules@release/dist/surge/domain-set/ai.txt
+https://cdn.jsdelivr.net/gh/imNebula/Rules@release/dist/surge/rule-set/ai.list
 ```
 
 ## GitHub Pages
@@ -135,7 +136,7 @@ rule-providers:
     type: http
     behavior: classical
     format: yaml
-    url: https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/ai.yaml
+    url: https://raw.githubusercontent.com/imNebula/Rules/release/dist/mihomo/ai.yaml
     path: ./ruleset/ai.yaml
     interval: 86400
 
@@ -150,7 +151,7 @@ Surge：
 
 ```ini
 [Rule]
-DOMAIN-SET,https://raw.githubusercontent.com/imNebula/Rules/main/dist/surge/domain-set/ai.txt,AI,extended-matching
+DOMAIN-SET,https://raw.githubusercontent.com/imNebula/Rules/release/dist/surge/domain-set/ai.txt,AI,extended-matching
 FINAL,PROXY
 ```
 

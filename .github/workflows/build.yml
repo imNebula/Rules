@@ -33,17 +33,18 @@ jobs:
       - name: Build rule files
         run: python scripts/build.py
 
-      - name: Commit generated dist files
+      - name: Commit and push to release branch
         run: |
-          git add -A dist
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B temp-release-branch
+          git add -f dist
           if git diff --cached --quiet; then
             echo "No dist changes to commit."
             exit 0
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "chore: update generated rules"
-          git push
+          git push origin temp-release-branch:release --force
 
       - name: Upload Pages artifact
         if: ${{ vars.ENABLE_PAGES == 'true' }}

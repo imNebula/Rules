@@ -1,0 +1,28 @@
+rule-providers:
+  uzu:
+    type: http
+    behavior: domain
+    format: yaml
+    url: 'https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/domain/uzu.yaml'
+    path: ./ruleset/uzu-domain.yaml
+    interval: 86400
+  sb:
+    type: http
+    behavior: domain
+    format: yaml
+    url: 'https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/domain/sb.yaml'
+    path: ./ruleset/sb-domain.yaml
+    interval: 86400
+  fast:
+    type: http
+    behavior: domain
+    format: yaml
+    url: 'https://raw.githubusercontent.com/imNebula/Rules/main/dist/mihomo/domain/fast.yaml'
+    path: ./ruleset/fast-domain.yaml
+    interval: 86400
+
+rules:
+  - RULE-SET,uzu,UZU
+  - RULE-SET,sb,SB
+  - RULE-SET,fast,FAST
+  - MATCH,PROXY
